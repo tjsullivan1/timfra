@@ -31,7 +31,7 @@ jobs:
 
       - name: Terraform Init/Plan/Apply
         run: |
-          cd infra/terraform
+          cd environments/${{ inputs.environment }}
           export ARM_USE_OIDC=true
           export ARM_CLIENT_ID="${{ vars.AZURE_CLIENT_ID }}"
           export ARM_TENANT_ID="${{ vars.AZURE_TENANT_ID }}"
