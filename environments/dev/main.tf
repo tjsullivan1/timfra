@@ -67,10 +67,10 @@ resource "helm_release" "argocd" {
   namespace  = kubernetes_namespace.argocd.metadata[0].name
   version    = "9.3.4"
 
-  set = {
+  set = [{
     name  = "server.service.type"
     value = "LoadBalancer"
-  }
+  }]
 
   depends_on = [kubernetes_namespace.argocd]
 }
