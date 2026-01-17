@@ -42,7 +42,7 @@ jobs:
             -var project_name=${{ github.event.repository.name }} \
             -var tenant_id=${{ vars.AZURE_TENANT_ID }} \
             -var subscription_id=${{ vars.AZURE_SUBSCRIPTION_ID }} \
-            -var acr_name=${{ vars.ACR_NAME }} \
+            -var prefix=${{ vars.PREFIX }} \
             -var location=${{ vars.AZ_REGION }}
 
           terraform apply -auto-approve tfplan

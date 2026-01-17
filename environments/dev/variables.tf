@@ -22,7 +22,7 @@ variable "subscription_id" {
 variable "kubernetes_version" {
   description = "Kubernetes version for AKS"
   type        = string
-  default     = "1.28"
+  default     = "1.34"
 }
 
 variable "vnet_address_space" {
@@ -46,7 +46,7 @@ variable "db_subnet_address_prefix" {
 variable "default_node_pool_vm_size" {
   description = "VM size for default node pool"
   type        = string
-  default     = "Standard_D2s_v3"
+  default     = "Standard_B2als_v2"
 }
 
 variable "default_node_pool_node_count" {
