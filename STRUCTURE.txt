@@ -1,0 +1,77 @@
+AKS Terraform Platform Structure
+=================================
+
+Root Directory
+├── .gitignore                        # Terraform state and temp file exclusions
+├── AKS_README.md                     # Comprehensive usage guide
+├── IMPLEMENTATION_SUMMARY.md         # Requirements checklist
+│
+├── modules/                          # Reusable Terraform modules
+│   ├── network/                      # Virtual network module
+│   │   ├── main.tf                   # VNet, AKS subnet, DB subnet with delegation
+│   │   ├── variables.tf              # Network configuration inputs
+│   │   └── outputs.tf                # VNet and subnet IDs
+│   │
+│   ├── aks/                          # Azure Kubernetes Service module
+│   │   ├── main.tf                   # AKS cluster with:
+│   │   │                             #   - User-Assigned Managed Identity
+│   │   │                             #   - OIDC issuer enabled
+│   │   │                             #   - Azure CNI Overlay networking
+│   │   │                             #   - Auto-scaling node pool
+│   │   ├── variables.tf              # AKS configuration inputs
+│   │   └── outputs.tf                # Cluster details and credentials
+│   │
+│   └── disk/                         # Managed disk module
+│       ├── main.tf                   # Premium SSD v2 disk for Postgres
+│       ├── variables.tf              # Disk configuration inputs
+│       └── outputs.tf                # Disk ID and name
+│
+└── environments/                     # Environment-specific configurations
+    └── dev/                          # Development environment
+        ├── main.tf                   # Orchestrates all modules:
+        │                             #   - Resource group creation
+        │                             #   - Network module
+        │                             #   - AKS module
+        │                             #   - Disk module
+        │                             #   - ArgoCD namespace
+        │                             #   - ArgoCD Helm release
+        │
+        ├── variables.tf              # Environment variables:
+        │                             #   - prefix (for resource naming)
+        │                             #   - location, tenant_id, subscription_id
+        │                             #   - kubernetes_version, network config
+        │                             #   - node pool settings, tags
+        │
+        ├── providers.tf              # Provider configuration:
+        │                             #   - azurerm (OIDC enabled, no secrets)
+        │                             #   - azuread
+        │                             #   - kubernetes (AKS credentials)
+        │                             #   - helm (AKS credentials)
+        │
+        ├── outputs.tf                # Environment outputs:
+        │                             #   - Resource group name
+        │                             #   - Network details
+        │                             #   - AKS cluster information
+        │                             #   - Disk details
+        │                             #   - kubectl access command
+        │
+        └── terraform.tfvars.example  # Example configuration values
+
+Key Features:
+=============
+✓ OIDC authentication (no hardcoded secrets)
+✓ Prefix-based resource naming
+✓ Azure CNI Overlay (no IP exhaustion)
+✓ Managed Identity for secure access
+✓ ArgoCD pre-installed via Helm
+✓ Modular, reusable design
+✓ Comprehensive documentation
+
+Usage:
+======
+1. cd environments/dev
+2. cp terraform.tfvars.example terraform.tfvars
+3. Edit terraform.tfvars with your values
+4. terraform init
+5. terraform plan
+6. terraform apply
