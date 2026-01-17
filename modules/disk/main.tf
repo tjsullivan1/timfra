@@ -1,5 +1,5 @@
 resource "azurerm_managed_disk" "postgres" {
-  name                 = "${var.prefix}-postgres-disk"
+  name                 = "disk-${var.prefix}-postgres"
   location             = var.location
   resource_group_name  = var.resource_group_name
   storage_account_type = "PremiumV2_LRS"

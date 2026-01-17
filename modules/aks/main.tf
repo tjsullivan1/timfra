@@ -1,5 +1,5 @@
 resource "azurerm_user_assigned_identity" "aks" {
-  name                = "${var.prefix}-aks-identity"
+  name                = "uami-${var.prefix}-aks"
   location            = var.location
   resource_group_name = var.resource_group_name
 
@@ -7,10 +7,10 @@ resource "azurerm_user_assigned_identity" "aks" {
 }
 
 resource "azurerm_kubernetes_cluster" "aks" {
-  name                = "${var.prefix}-aks"
+  name                = "aks-${var.prefix}"
   location            = var.location
   resource_group_name = var.resource_group_name
-  dns_prefix          = "${var.prefix}-aks"
+  dns_prefix          = "aks-${var.prefix}"
   kubernetes_version  = var.kubernetes_version
 
   oidc_issuer_enabled       = true

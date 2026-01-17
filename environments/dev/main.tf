@@ -7,7 +7,7 @@ locals {
 
 # Resource Group
 resource "azurerm_resource_group" "main" {
-  name     = "${var.prefix}-${local.environment}-rg"
+  name     = "rg-${var.prefix}-${local.environment}"
   location = var.location
   tags     = local.common_tags
 }
