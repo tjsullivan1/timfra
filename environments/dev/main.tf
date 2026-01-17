@@ -64,7 +64,7 @@ resource "helm_release" "argocd" {
   name       = "argocd"
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-cd"
-  namespace  = kubernetes_namespace.argocd.metadata[0].name
+  namespace  = kubernetes_namespace_v1.argocd.metadata[0].name
   version    = "9.3.4"
 
   set = [{
@@ -72,5 +72,5 @@ resource "helm_release" "argocd" {
     value = "LoadBalancer"
   }]
 
-  depends_on = [kubernetes_namespace.argocd]
+  depends_on = [kubernetes_namespace_v1.argocd]
 }

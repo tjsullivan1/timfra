@@ -45,7 +45,7 @@ output "postgres_disk_name" {
 
 output "argocd_namespace" {
   description = "Namespace where ArgoCD is installed"
-  value       = kubernetes_namespace.argocd.metadata[0].name
+  value       = kubernetes_namespace_v1.argocd.metadata[0].name
 }
 
 output "kube_config_command" {
