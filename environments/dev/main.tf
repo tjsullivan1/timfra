@@ -109,12 +109,12 @@ resource "azurerm_federated_identity_credential" "pg_backup_fed" {
   resource_group_name = azurerm_resource_group.main.name
   parent_id           = azurerm_user_assigned_identity.pg_backup_identity.id
   audience            = ["api://AzureADTokenExchange"]
-  issuer              = modules.aks.oidc_issuer_url
+  issuer              = module.aks.oidc_issuer_url
   subject             = "system:serviceaccount:database-dev:tim-db" # Match your DB name/ns
 }
 
 # 4. Inject variables into K8s so Argo CD can see them
-resource "kubernetes_config_map" "infra_outputs" {
+resource "kubernetes_config_map_v1" "infra_outputs" {
   metadata {
     name      = "infra-outputs"
     namespace = "database-dev"
