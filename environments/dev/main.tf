@@ -74,3 +74,40 @@ resource "helm_release" "argocd" {
 
   depends_on = [kubernetes_namespace_v1.argocd]
 }
+
+# 1. Create the Identity for Postgres
+resource "azurerm_user_assigned_identity" "pg_backup_identity" {
+  name                = "${var.prefix}-pg-backup-id"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+}
+
+# 2. Grant it access to the Storage Account
+resource "azurerm_role_assignment" "storage_contributor" {
+  scope                = azurerm_storage_account.backup_store.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = azurerm_user_assigned_identity.pg_backup_identity.principal_id
+}
+
+# 3. Federated Credential (the "Link" to AKS)
+resource "azurerm_federated_identity_credential" "pg_backup_fed" {
+  name                = "pg-backup-fed-credential"
+  resource_group_name = azurerm_resource_group.main.name
+  parent_id           = azurerm_user_assigned_identity.pg_backup_identity.id
+  audience            = ["api://AzureADTokenExchange"]
+  issuer              = azurerm_kubernetes_cluster.main.oidc_issuer_url
+  subject             = "system:serviceaccount:database-dev:tim-db" # Match your DB name/ns
+}
+
+# 4. Inject variables into K8s so Argo CD can see them
+resource "kubernetes_config_map" "infra_outputs" {
+  metadata {
+    name      = "infra-outputs"
+    namespace = "database-dev"
+  }
+  data = {
+    storage_account_name = azurerm_storage_account.backup_store.name
+    container_name       = azurerm_storage_container.backups.name
+    client_id            = azurerm_user_assigned_identity.pg_backup_identity.client_id
+  }
+}
