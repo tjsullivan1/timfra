@@ -75,6 +75,20 @@ resource "helm_release" "argocd" {
   depends_on = [kubernetes_namespace_v1.argocd]
 }
 
+resource "azurerm_storage_account" "backup_store" {
+  name                     = "st${var.prefix}backup"
+  resource_group_name      = azurerm_resource_group.main.name
+  location                 = azurerm_resource_group.main.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+} 
+
+resource "azurerm_storage_container" "backups" {
+  name                 = "backups"
+  storage_account_id   = azurerm_storage_account.backup_store.id
+  container_access_type = "private"
+}
+
 # 1. Create the Identity for Postgres
 resource "azurerm_user_assigned_identity" "pg_backup_identity" {
   name                = "${var.prefix}-pg-backup-id"
@@ -95,7 +109,7 @@ resource "azurerm_federated_identity_credential" "pg_backup_fed" {
   resource_group_name = azurerm_resource_group.main.name
   parent_id           = azurerm_user_assigned_identity.pg_backup_identity.id
   audience            = ["api://AzureADTokenExchange"]
-  issuer              = azurerm_kubernetes_cluster.main.oidc_issuer_url
+  issuer              = modules.aks.oidc_issuer_url
   subject             = "system:serviceaccount:database-dev:tim-db" # Match your DB name/ns
 }
 
