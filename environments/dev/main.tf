@@ -113,11 +113,18 @@ resource "azurerm_federated_identity_credential" "pg_backup_fed" {
   subject             = "system:serviceaccount:database-dev:tim-db" # Match your DB name/ns
 }
 
+# Create the namespace so it exists for the ConfigMap and ServiceAccount
+resource "kubernetes_namespace" "db_dev" {
+  metadata {
+    name = "database-dev"
+  }
+}
+
 # 4. Inject variables into K8s so Argo CD can see them
 resource "kubernetes_config_map_v1" "infra_outputs" {
   metadata {
     name      = "infra-outputs"
-    namespace = "database-dev"
+    namespace = kubernetes_namespace.db_dev.metadata[0].name
   }
   data = {
     storage_account_name = azurerm_storage_account.backup_store.name
