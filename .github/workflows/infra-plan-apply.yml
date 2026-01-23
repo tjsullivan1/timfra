@@ -44,7 +44,8 @@ jobs:
             -var tenant_id=${{ vars.AZURE_TENANT_ID }} \
             -var subscription_id=${{ vars.AZURE_SUBSCRIPTION_ID }} \
             -var prefix=${{ vars.PREFIX }} \
-            -var location=${{ vars.AZ_REGION }}
+            -var location=${{ vars.AZ_REGION }} \
+            -var keyvault_admin_user_object_id=${{ vars.KEYVAULT_ADMIN_USER_OBJECT_ID }}
 
           terraform apply -auto-approve tfplan
         env:
