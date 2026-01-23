@@ -113,6 +113,15 @@ resource "azurerm_federated_identity_credential" "pg_backup_fed" {
   subject             = "system:serviceaccount:database-dev:tim-db" # Match your DB name/ns
 }
 
+resource "azurerm_federated_identity_credential" "eso_federation" {
+  name                = "eso-federation"
+  resource_group_name = azurerm_resource_group.main.name
+  parent_id           = azurerm_user_assigned_identity.pg_backup_identity.id
+  audience            = ["api://AzureADTokenExchange"]
+  issuer              = module.aks.oidc_issuer_url
+  subject             = "system:serviceaccount:external-secrets:external-secrets" # Match your DB name/ns
+}
+
 # Create the namespace so it exists for the ConfigMap and ServiceAccount
 resource "kubernetes_namespace" "db_dev" {
   metadata {
