@@ -132,3 +132,50 @@ resource "kubernetes_config_map_v1" "infra_outputs" {
     client_id            = azurerm_user_assigned_identity.pg_backup_identity.client_id
   }
 }
+
+# Get current client configuration for the deploying service principal
+data "azurerm_client_config" "current" {}
+
+# Azure Key Vault with RBAC enabled
+resource "azurerm_key_vault" "main" {
+  name                       = "kv-${var.prefix}-${local.environment}"
+  location                   = azurerm_resource_group.main.location
+  resource_group_name        = azurerm_resource_group.main.name
+  tenant_id                  = var.tenant_id
+  sku_name                   = "standard"
+  enable_rbac_authorization  = true
+  purge_protection_enabled   = false
+  soft_delete_retention_days = 7
+
+  tags = local.common_tags
+}
+
+# Role assignment: Deploying service principal - Key Vault Secrets Officer (read/write)
+resource "azurerm_role_assignment" "kv_deployer_secrets_officer" {
+  scope                = azurerm_key_vault.main.id
+  role_definition_name = "Key Vault Secrets Officer"
+  principal_id         = data.azurerm_client_config.current.object_id
+}
+
+# Role assignment: AKS managed identity - Key Vault Secrets User (read)
+resource "azurerm_role_assignment" "kv_aks_secrets_user" {
+  scope                = azurerm_key_vault.main.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = module.aks.identity_principal_id
+}
+
+# Role assignment: Admin user - Key Vault Secrets User (read)
+resource "azurerm_role_assignment" "kv_user_secrets_user" {
+  scope                = azurerm_key_vault.main.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = var.keyvault_admin_user_object_id
+}
+
+# Secret: Storage account name
+resource "azurerm_key_vault_secret" "storage_account_name" {
+  name         = "timstapaper-storage-account-name"
+  value        = azurerm_storage_account.backup_store.name
+  key_vault_id = azurerm_key_vault.main.id
+
+  depends_on = [azurerm_role_assignment.kv_deployer_secrets_officer]
+}

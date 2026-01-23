@@ -69,3 +69,8 @@ variable "tags" {
     ManagedBy   = "terraform"
   }
 }
+
+variable "keyvault_admin_user_object_id" {
+  description = "Object ID of the user to grant Key Vault secrets read access"
+  type        = string
+}
