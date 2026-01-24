@@ -1,4 +1,5 @@
 locals {
+  uniquename = "${var.prefix}${var.iteration}"
   environment = "dev"
   common_tags = merge(var.tags, {
     Project = var.prefix
@@ -7,7 +8,7 @@ locals {
 
 # Resource Group
 resource "azurerm_resource_group" "main" {
-  name     = "rg-${var.prefix}-${local.environment}"
+  name     = "rg-${local.uniquename}-${local.environment}"
   location = var.location
   tags     = local.common_tags
 }
@@ -16,7 +17,7 @@ resource "azurerm_resource_group" "main" {
 module "network" {
   source = "../../modules/network"
 
-  prefix                    = var.prefix
+  prefix                    = local.uniquename
   location                  = var.location
   resource_group_name       = azurerm_resource_group.main.name
   vnet_address_space        = var.vnet_address_space
@@ -29,7 +30,7 @@ module "network" {
 module "aks" {
   source = "../../modules/aks"
 
-  prefix                       = var.prefix
+  prefix                       = local.uniquename
   location                     = var.location
   resource_group_name          = azurerm_resource_group.main.name
   vnet_subnet_id               = module.network.aks_subnet_id
@@ -43,7 +44,7 @@ module "aks" {
 module "disk" {
   source = "../../modules/disk"
 
-  prefix              = var.prefix
+  prefix              = local.uniquename
   location            = var.location
   resource_group_name = azurerm_resource_group.main.name
   disk_size_gb        = var.disk_size_gb
@@ -76,7 +77,7 @@ resource "helm_release" "argocd" {
 }
 
 resource "azurerm_storage_account" "backup_store" {
-  name                     = "st${var.prefix}backup"
+  name                     = "st${local.uniquename}backup"
   resource_group_name      = azurerm_resource_group.main.name
   location                 = azurerm_resource_group.main.location
   account_tier             = "Standard"
@@ -91,7 +92,7 @@ resource "azurerm_storage_container" "backups" {
 
 # 1. Create the Identity for Postgres
 # resource "azurerm_user_assigned_identity" "pg_backup_identity" {
-#   name                = "${var.prefix}-pg-backup-id"
+#   name                = "${local.uniquename}-pg-backup-id"
 #   resource_group_name = azurerm_resource_group.main.name
 #   location            = azurerm_resource_group.main.location
 # }
@@ -122,32 +123,32 @@ resource "azurerm_federated_identity_credential" "eso_federation" {
   subject             = "system:serviceaccount:external-secrets:external-secrets" # Match your DB name/ns
 }
 
-# # Create the namespace so it exists for the ConfigMap and ServiceAccount
-# resource "kubernetes_namespace_v1" "db_dev" {
-#   metadata {
-#     name = "database-dev"
-#   }
-# }
+# Create the namespace so it exists for the ConfigMap and ServiceAccount
+resource "kubernetes_namespace_v1" "db_dev" {
+  metadata {
+    name = "database-dev"
+  }
+}
 
-# # 4. Inject variables into K8s so Argo CD can see them
-# resource "kubernetes_config_map_v1" "infra_outputs" {
-#   metadata {
-#     name      = "infra-outputs"
-#     namespace = kubernetes_namespace_v1.db_dev.metadata[0].name
-#   }
-#   data = {
-#     storage_account_name = azurerm_storage_account.backup_store.name
-#     container_name       = azurerm_storage_container.backups.name
-#     client_id            = module.aks.identity_principal_id
-#   }
-# }
+# 4. Inject variables into K8s so Argo CD can see them
+resource "kubernetes_config_map_v1" "infra_outputs" {
+  metadata {
+    name      = "infra-outputs"
+    namespace = kubernetes_namespace_v1.db_dev.metadata[0].name
+  }
+  data = {
+    storage_account_name = azurerm_storage_account.backup_store.name
+    container_name       = azurerm_storage_container.backups.name
+    client_id            = module.aks.identity_principal_id
+  }
+}
 
 # Get current client configuration for the deploying service principal
 data "azurerm_client_config" "current" {}
 
 # Azure Key Vault with RBAC enabled
 resource "azurerm_key_vault" "main" {
-  name                       = "kv-${var.prefix}-${local.environment}"
+  name                       = "kv-${local.uniquename}-${local.environment}"
   location                   = azurerm_resource_group.main.location
   resource_group_name        = azurerm_resource_group.main.name
   tenant_id                  = var.tenant_id

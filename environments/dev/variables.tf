@@ -3,6 +3,12 @@ variable "prefix" {
   type        = string
 }
 
+variable "iteration" {
+  description = "Iteration identifier to ensure uniqueness"
+  type        = string
+  default     = "1"
+}
+
 variable "location" {
   description = "Azure region for resources"
   type        = string
