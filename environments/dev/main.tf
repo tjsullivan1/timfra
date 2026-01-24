@@ -29,14 +29,14 @@ module "network" {
 module "aks" {
   source = "../../modules/aks"
 
-  prefix                         = var.prefix
-  location                       = var.location
-  resource_group_name            = azurerm_resource_group.main.name
-  vnet_subnet_id                 = module.network.aks_subnet_id
-  kubernetes_version             = var.kubernetes_version
-  default_node_pool_vm_size      = var.default_node_pool_vm_size
-  default_node_pool_node_count   = var.default_node_pool_node_count
-  tags                           = local.common_tags
+  prefix                       = var.prefix
+  location                     = var.location
+  resource_group_name          = azurerm_resource_group.main.name
+  vnet_subnet_id               = module.network.aks_subnet_id
+  kubernetes_version           = var.kubernetes_version
+  default_node_pool_vm_size    = var.default_node_pool_vm_size
+  default_node_pool_node_count = var.default_node_pool_node_count
+  tags                         = local.common_tags
 }
 
 # Disk Module
@@ -81,11 +81,11 @@ resource "azurerm_storage_account" "backup_store" {
   location                 = azurerm_resource_group.main.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
-} 
+}
 
 resource "azurerm_storage_container" "backups" {
-  name                 = "backups"
-  storage_account_id   = azurerm_storage_account.backup_store.id
+  name                  = "backups"
+  storage_account_id    = azurerm_storage_account.backup_store.id
   container_access_type = "private"
 }
 
@@ -123,7 +123,7 @@ resource "azurerm_federated_identity_credential" "eso_federation" {
 }
 
 # Create the namespace so it exists for the ConfigMap and ServiceAccount
-resource "kubernetes_namespace" "db_dev" {
+resource "kubernetes_namespace_v1" "db_dev" {
   metadata {
     name = "database-dev"
   }
@@ -138,7 +138,7 @@ resource "kubernetes_config_map_v1" "infra_outputs" {
   data = {
     storage_account_name = azurerm_storage_account.backup_store.name
     container_name       = azurerm_storage_container.backups.name
-    client_id            = azurerm_user_assigned_identity.pg_backup_identity.client_id
+    client_id            = module.aks.identity_principal_id
   }
 }
 
@@ -152,7 +152,7 @@ resource "azurerm_key_vault" "main" {
   resource_group_name        = azurerm_resource_group.main.name
   tenant_id                  = var.tenant_id
   sku_name                   = "standard"
-  enable_rbac_authorization  = true
+  rbac_authorization_enabled = true
   purge_protection_enabled   = false
   soft_delete_retention_days = 7
 
