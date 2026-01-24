@@ -122,25 +122,25 @@ resource "azurerm_federated_identity_credential" "eso_federation" {
   subject             = "system:serviceaccount:external-secrets:external-secrets" # Match your DB name/ns
 }
 
-# Create the namespace so it exists for the ConfigMap and ServiceAccount
-resource "kubernetes_namespace_v1" "db_dev" {
-  metadata {
-    name = "database-dev"
-  }
-}
+# # Create the namespace so it exists for the ConfigMap and ServiceAccount
+# resource "kubernetes_namespace_v1" "db_dev" {
+#   metadata {
+#     name = "database-dev"
+#   }
+# }
 
-# 4. Inject variables into K8s so Argo CD can see them
-resource "kubernetes_config_map_v1" "infra_outputs" {
-  metadata {
-    name      = "infra-outputs"
-    namespace = kubernetes_namespace_v1.db_dev.metadata[0].name
-  }
-  data = {
-    storage_account_name = azurerm_storage_account.backup_store.name
-    container_name       = azurerm_storage_container.backups.name
-    client_id            = module.aks.identity_principal_id
-  }
-}
+# # 4. Inject variables into K8s so Argo CD can see them
+# resource "kubernetes_config_map_v1" "infra_outputs" {
+#   metadata {
+#     name      = "infra-outputs"
+#     namespace = kubernetes_namespace_v1.db_dev.metadata[0].name
+#   }
+#   data = {
+#     storage_account_name = azurerm_storage_account.backup_store.name
+#     container_name       = azurerm_storage_container.backups.name
+#     client_id            = module.aks.identity_principal_id
+#   }
+# }
 
 # Get current client configuration for the deploying service principal
 data "azurerm_client_config" "current" {}
