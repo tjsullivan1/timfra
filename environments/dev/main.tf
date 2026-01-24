@@ -116,7 +116,7 @@ resource "azurerm_federated_identity_credential" "pg_backup_fed" {
 resource "azurerm_federated_identity_credential" "eso_federation" {
   name                = "eso-federation"
   resource_group_name = azurerm_resource_group.main.name
-  parent_id           = azurerm_user_assigned_identity.pg_backup_identity.id
+  parent_id           = module.aks.identity_principal_id
   audience            = ["api://AzureADTokenExchange"]
   issuer              = module.aks.oidc_issuer_url
   subject             = "system:serviceaccount:external-secrets:external-secrets" # Match your DB name/ns
