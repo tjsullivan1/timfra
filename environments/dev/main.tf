@@ -90,24 +90,24 @@ resource "azurerm_storage_container" "backups" {
 }
 
 # 1. Create the Identity for Postgres
-resource "azurerm_user_assigned_identity" "pg_backup_identity" {
-  name                = "${var.prefix}-pg-backup-id"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
-}
+# resource "azurerm_user_assigned_identity" "pg_backup_identity" {
+#   name                = "${var.prefix}-pg-backup-id"
+#   resource_group_name = azurerm_resource_group.main.name
+#   location            = azurerm_resource_group.main.location
+# }
 
 # 2. Grant it access to the Storage Account
 resource "azurerm_role_assignment" "storage_contributor" {
   scope                = azurerm_storage_account.backup_store.id
   role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = azurerm_user_assigned_identity.pg_backup_identity.principal_id
+  principal_id         = module.aks.identity_principal_id
 }
 
 # 3. Federated Credential (the "Link" to AKS)
 resource "azurerm_federated_identity_credential" "pg_backup_fed" {
   name                = "pg-backup-fed-credential"
   resource_group_name = azurerm_resource_group.main.name
-  parent_id           = azurerm_user_assigned_identity.pg_backup_identity.id
+  parent_id           = module.aks.identity_principal_id
   audience            = ["api://AzureADTokenExchange"]
   issuer              = module.aks.oidc_issuer_url
   subject             = "system:serviceaccount:database-dev:tim-db" # Match your DB name/ns
@@ -138,7 +138,7 @@ resource "kubernetes_config_map_v1" "infra_outputs" {
   data = {
     storage_account_name = azurerm_storage_account.backup_store.name
     container_name       = azurerm_storage_container.backups.name
-    client_id            = azurerm_user_assigned_identity.pg_backup_identity.client_id
+    client_id            = module.aks.identity_principal_id
   }
 }
 
