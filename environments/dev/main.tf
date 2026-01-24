@@ -107,7 +107,7 @@ resource "azurerm_role_assignment" "storage_contributor" {
 resource "azurerm_federated_identity_credential" "pg_backup_fed" {
   name                = "pg-backup-fed-credential"
   resource_group_name = azurerm_resource_group.main.name
-  parent_id           = module.aks.identity_principal_id
+  parent_id           = module.aks.identity_id
   audience            = ["api://AzureADTokenExchange"]
   issuer              = module.aks.oidc_issuer_url
   subject             = "system:serviceaccount:database-dev:tim-db" # Match your DB name/ns
@@ -116,7 +116,7 @@ resource "azurerm_federated_identity_credential" "pg_backup_fed" {
 resource "azurerm_federated_identity_credential" "eso_federation" {
   name                = "eso-federation"
   resource_group_name = azurerm_resource_group.main.name
-  parent_id           = module.aks.identity_principal_id
+  parent_id           = module.aks.identity_id
   audience            = ["api://AzureADTokenExchange"]
   issuer              = module.aks.oidc_issuer_url
   subject             = "system:serviceaccount:external-secrets:external-secrets" # Match your DB name/ns
@@ -138,7 +138,7 @@ resource "kubernetes_config_map_v1" "infra_outputs" {
   data = {
     storage_account_name = azurerm_storage_account.backup_store.name
     container_name       = azurerm_storage_container.backups.name
-    client_id            = module.aks.identity_principal_id
+    client_id            = azurerm_user_assigned_identity.pg_backup_identity.client_id
   }
 }
 
