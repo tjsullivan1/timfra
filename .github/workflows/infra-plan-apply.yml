@@ -7,6 +7,14 @@ on:
         description: Target environment
         default: dev
         required: true
+      action:
+        description: Action to perform
+        type: choice
+        options:
+          - apply
+          - destroy
+        default: apply
+        required: true
 
 jobs:
   tf:
@@ -30,6 +38,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init/Plan/Apply
+        if: inputs.action == 'apply'
         run: |
           cd environments/${{ inputs.environment }}
           export ARM_USE_OIDC=true
@@ -48,6 +57,30 @@ jobs:
             -var keyvault_admin_user_object_id=${{ vars.KEYVAULT_ADMIN_USER_OBJECT_ID }}
 
           terraform apply -auto-approve tfplan
+        env:
+          TFSTATE_RG: ${{ vars.TFSTATE_RG }}
+          TFSTATE_ACCOUNT: ${{ vars.TFSTATE_ACCOUNT }}
+          TFSTATE_CONTAINER: ${{ vars.TFSTATE_CONTAINER }}
+          TFSTATE_KEY: "${{ github.event.repository.name }}-${{ github.ref_name }}.tfstate"
+
+      - name: Terraform Init/Destroy
+        if: inputs.action == 'destroy'
+        run: |
+          cd environments/${{ inputs.environment }}
+          export ARM_USE_OIDC=true
+          export ARM_CLIENT_ID="${{ vars.AZURE_CLIENT_ID }}"
+          export ARM_TENANT_ID="${{ vars.AZURE_TENANT_ID }}"
+          export ARM_SUBSCRIPTION_ID="${{ vars.AZURE_SUBSCRIPTION_ID }}"
+
+          terraform init -backend-config="resource_group_name=${TFSTATE_RG}" \
+                         -backend-config="key=${TFSTATE_KEY}" -backend-config="storage_account_name=${TFSTATE_ACCOUNT}" \
+                         -backend-config="container_name=${TFSTATE_CONTAINER}"
+          terraform destroy -auto-approve \
+            -var tenant_id=${{ vars.AZURE_TENANT_ID }} \
+            -var subscription_id=${{ vars.AZURE_SUBSCRIPTION_ID }} \
+            -var prefix=${{ vars.PREFIX }} \
+            -var location=${{ vars.AZ_REGION }} \
+            -var keyvault_admin_user_object_id=${{ vars.KEYVAULT_ADMIN_USER_OBJECT_ID }}
         env:
           TFSTATE_RG: ${{ vars.TFSTATE_RG }}
           TFSTATE_ACCOUNT: ${{ vars.TFSTATE_ACCOUNT }}
