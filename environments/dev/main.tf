@@ -206,7 +206,7 @@ resource "azurerm_network_security_rule" "allow_web_traffic" {
   protocol                    = "Tcp"
   source_port_range           = "*"
   destination_port_ranges      = ["443", "80"]
-  source_address_prefix       = "68.47.561.150"
+  source_address_prefix       = "68.47.561.150/32"
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.main.name
   network_security_group_name = azurerm_network_security_group.aks_nsg.name
