@@ -120,7 +120,7 @@ resource "azurerm_federated_identity_credential" "eso_federation" {
   parent_id           = module.aks.identity_id
   audience            = ["api://AzureADTokenExchange"]
   issuer              = module.aks.oidc_issuer_url
-  subject             = "system:serviceaccount:database-dev:eso-service-account" # Match your DB name/ns
+  subject             = "system:serviceaccount:external-secrets:eso-service-account" # Match your DB name/ns
 }
 
 # Create the namespace so it exists for the ConfigMap and ServiceAccount
