@@ -189,3 +189,57 @@ resource "azurerm_key_vault_secret" "storage_account_name" {
 
   depends_on = [azurerm_role_assignment.kv_deployer_secrets_officer]
 }
+
+resource "azurerm_network_security_group" "aks_nsg" {
+  name                = "nsg-${local.uniquename}-aks"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+
+  tags = local.common_tags
+}
+
+resource "azurerm_network_security_rule" "allow_web_traffic" {
+  name                        = "allow-http-https"
+  priority                    = 100
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_ranges      = ["443", "80"]
+  source_address_prefix       = "68.47.561.150"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.main.name
+  network_security_group_name = azurerm_network_security_group.aks_nsg.name
+}
+
+resource "azurerm_network_security_group" "db_nsg" {
+  name                = "nsg-${local.uniquename}-db"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+
+  tags = local.common_tags
+}
+
+resource "azurerm_network_security_rule" "allow_aks_to_db" {
+  name                        = "allow-aks-to-db"
+  priority                    = 100
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_ranges     = ["5432"]
+  source_address_prefix       = module.network.aks_subnet_address_prefix
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.main.name
+  network_security_group_name = azurerm_network_security_group.db_nsg.name
+}
+
+resource "azurerm_subnet_network_security_group_association" "aks_nsg_association" {
+  subnet_id                 = module.network.aks_subnet_id
+  network_security_group_id = azurerm_network_security_group.aks_nsg.id
+}
+
+resource "azurerm_subnet_network_security_group_association" "db_nsg_association" {
+  subnet_id                 = module.network.db_subnet_id
+  network_security_group_id = azurerm_network_security_group.db_nsg.id
+}
