@@ -228,7 +228,7 @@ resource "azurerm_network_security_rule" "allow_aks_to_db" {
   protocol                    = "Tcp"
   source_port_range           = "*"
   destination_port_ranges     = ["5432"]
-  source_address_prefix       = module.network.aks_subnet_address_prefix
+  source_address_prefix       = var.aks_subnet_address_prefix
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.main.name
   network_security_group_name = azurerm_network_security_group.db_nsg.name
