@@ -123,6 +123,15 @@ resource "azurerm_federated_identity_credential" "eso_federation" {
   subject             = "system:serviceaccount:external-secrets:eso-service-account" # Match your DB name/ns
 }
 
+resource "azurerm_federated_identity_credential" "cert_federation" {
+  name                = "cert-federation"
+  resource_group_name = azurerm_resource_group.main.name
+  parent_id           = module.aks.identity_id
+  audience            = ["api://AzureADTokenExchange"]
+  issuer              = module.aks.oidc_issuer_url
+  subject             = "system:serviceaccount:cert-manager:cert-manager" # Match your DB name/ns
+}
+
 # Create the namespace so it exists for the ConfigMap and ServiceAccount
 resource "kubernetes_namespace_v1" "db_dev" {
   metadata {
