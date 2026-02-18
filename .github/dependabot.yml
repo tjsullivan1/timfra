@@ -51,7 +51,12 @@ updates:
 
   # Enable version updates for Terraform
   - package-ecosystem: "terraform"
-    directory: "/infra/terraform"
+    directories: 
+      - "/modules/aks"
+      - "/modules/disk"
+      - "/modules/network"
+      - "/environments/prod"
+      - "/environments/dev"
     schedule:
       interval: "weekly"
       day: "monday"
