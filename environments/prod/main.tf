@@ -137,7 +137,7 @@ resource "kubernetes_namespace_v1" "db" {
 resource "kubernetes_config_map_v1" "infra_outputs" {
   metadata {
     name      = "infra-outputs"
-    namespace = kubernetes_namespace_v1.db_${local.environment}.metadata[0].name
+    namespace = kubernetes_namespace_v1.db.metadata[0].name
   }
   data = {
     storage_account_name = azurerm_storage_account.backup_store.name
