@@ -77,7 +77,7 @@ resource "helm_release" "argocd" {
 }
 
 resource "azurerm_storage_account" "backup_store" {
-  name                     = "st${local.uniquename}backup"
+  name                     = "st${local.uniquename}backup${local.environment}"
   resource_group_name      = azurerm_resource_group.main.name
   location                 = azurerm_resource_group.main.location
   account_tier             = "Standard"
